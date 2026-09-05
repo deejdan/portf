@@ -197,14 +197,8 @@ h1 {
 }
 .headline-mask > span {
   display: block;
-  animation: headline-reveal 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: 0.3s;
-}
-.headline-mask:nth-child(2) > span {
-  animation-delay: 0.42s;
-}
-.headline-mask:nth-child(3) > span {
-  animation-delay: 0.54s;
+  animation: arrive 1.8s ease-out both;
+  animation-delay: 0.55s;
 }
 h1 em {
   color: var(--blue);
@@ -469,14 +463,6 @@ body:has(dialog[open]) {
     opacity: 1;
   }
 }
-@keyframes headline-reveal {
-  from {
-    transform: translateY(115%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
 @keyframes art-arrive {
   from {
     opacity: 0;
@@ -528,8 +514,11 @@ body:has(dialog[open]) {
     gap: 12px;
   }
   .hero {
-    padding: 100px 7% 70px;
+    height: auto;
+    min-height: 0;
+    padding: 118px 7% 82px;
     align-items: flex-start;
+    flex-direction: column;
   }
   .hero::before {
     top: 80px;
@@ -546,8 +535,13 @@ body:has(dialog[open]) {
     margin-bottom: 12px;
   }
   h1 {
-    font-size: clamp(28px, min(11vw, 8.2dvh), 76px);
+    font-size: clamp(52px, 16vw, 88px);
     letter-spacing: -.055em;
+    line-height: 1.02;
+  }
+  .headline-mask {
+    overflow: visible;
+    white-space: normal;
   }
   .hero-support {
     margin-top: 20px;
@@ -569,16 +563,13 @@ body:has(dialog[open]) {
     margin-top: 24px;
   }
   .hero-art {
-    top: auto;
-    bottom: 70px;
-    right: 3%;
-    width: min(250px, 29dvh);
-    transform: none;
+    display: none;
   }
   .hero-footer {
-    height: 56px;
-    left: 6%;
-    right: 6%;
+    position: static;
+    height: auto;
+    margin-top: 64px;
+    width: 100%;
   }
   .footer-thought {
     display: none;
@@ -613,10 +604,6 @@ body:has(dialog[open]) {
 .header-cta:hover { background: var(--blue-hover); }
 .navigation button:hover, .navigation button:focus-visible { background: #7c9fff26; color: #b6ccff; }
 .dialog-close:hover, .text-button:hover { background: #7c9fff26; }
-@media (max-width: 760px) and (max-height: 740px) {
-  .hero-art { display: none; }
-  .hero { align-items: center; padding-top: 84px; }
-}
 @media (max-height: 620px) and (min-width: 761px) {
   .site-header { height: 64px; }
   .hero { padding-top: 76px; padding-bottom: 54px; }
@@ -627,7 +614,7 @@ body:has(dialog[open]) {
   .hero::before { bottom: 44px; }
 }
 /* Keep content accessible on exceptionally short screens. */
-@media (max-height: 450px) {
+@media (max-height: 450px) and (min-width: 761px) {
   .hero { height: auto; min-height: 100dvh; padding-top: 80px; padding-bottom: 76px; }
   .hero-art { display: none; }
 }

@@ -32,8 +32,9 @@ function Sculpture() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     let frame = 0;
-    let current = 0;
-    let target = 0;
+    let phase = -Math.PI / 2;
+    let velocity = 0.00042;
+    let lastPointerX: number | undefined;
     let lastTime = 0;
     const draw = (position: number) => {
       coilPaths(position).forEach((path, index) => paths[index].setAttribute("d", path));
@@ -41,40 +42,54 @@ function Sculpture() {
     const animate = (time: number) => {
       const elapsed = lastTime ? Math.min(time - lastTime, 64) : 16;
       lastTime = time;
-      current += (target - current) * (1 - Math.exp(-elapsed / 1000));
-      const settled = Math.abs(target - current) < 0.0005;
-      if (settled) current = target;
-      draw(current);
-      frame = settled ? 0 : requestAnimationFrame(animate);
-    };
-    const steer = (position: number) => {
-      target = position;
-      if (!frame) {
-        lastTime = 0;
-        frame = requestAnimationFrame(animate);
-      }
+      // The resting motion completes one left-to-right-to-left pass in ~15s.
+      // Pointer travel adds velocity in the same direction, then decays gently.
+      velocity += (0.00042 - velocity) * (1 - Math.exp(-elapsed / 1000));
+      phase += velocity * elapsed;
+      draw(Math.sin(phase));
+      frame = requestAnimationFrame(animate);
     };
     const move = (event: Event) => {
       const pointer = event as PointerEvent;
       if (reduced.matches || !finePointer.matches || pointer.pointerType === "touch") return;
-      const bounds = hero.getBoundingClientRect();
-      steer(Math.max(-1, Math.min(1, ((pointer.clientX - bounds.left) / bounds.width) * 2 - 1)));
+      if (lastPointerX !== undefined) {
+        const travel = Math.max(-80, Math.min(80, pointer.clientX - lastPointerX));
+        velocity = Math.max(-0.0025, Math.min(0.0025, velocity + travel * 0.000018));
+      }
+      lastPointerX = pointer.clientX;
     };
-    const reset = () => steer(0);
+    const reset = () => { lastPointerX = undefined; };
     const resetImmediately = () => {
       cancelAnimationFrame(frame);
       frame = 0;
-      current = target = lastTime = 0;
+      phase = -Math.PI / 2;
+      velocity = 0.00042;
+      lastTime = 0;
+      lastPointerX = undefined;
       draw(0);
     };
-    const visibility = () => { if (document.hidden) resetImmediately(); };
+    const start = () => {
+      if (!reduced.matches && finePointer.matches && !frame) {
+        lastTime = 0;
+        frame = requestAnimationFrame(animate);
+      }
+    };
+    const visibility = () => {
+      if (document.hidden) resetImmediately();
+      else start();
+    };
+    const preferenceChange = () => {
+      resetImmediately();
+      start();
+    };
     hero.addEventListener("pointermove", move, { passive: true });
     hero.addEventListener("pointerleave", reset);
     hero.addEventListener("pointercancel", reset);
     window.addEventListener("blur", reset);
     document.addEventListener("visibilitychange", visibility);
-    reduced.addEventListener("change", resetImmediately);
-    finePointer.addEventListener("change", resetImmediately);
+    reduced.addEventListener("change", preferenceChange);
+    finePointer.addEventListener("change", preferenceChange);
+    start();
     return () => {
       cancelAnimationFrame(frame);
       hero.removeEventListener("pointermove", move);
@@ -82,8 +97,8 @@ function Sculpture() {
       hero.removeEventListener("pointercancel", reset);
       window.removeEventListener("blur", reset);
       document.removeEventListener("visibilitychange", visibility);
-      reduced.removeEventListener("change", resetImmediately);
-      finePointer.removeEventListener("change", resetImmediately);
+      reduced.removeEventListener("change", preferenceChange);
+      finePointer.removeEventListener("change", preferenceChange);
     };
   }, []);
   return (
