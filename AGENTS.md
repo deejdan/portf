@@ -59,15 +59,15 @@ that matters.
 
 “Daniel.” and “matters.” use the same `#2855D9` as the buttons. Emphasis is upright, not italic. Do not reintroduce the vertical introduction/year label, the line beneath the navigation, or the coil caption.
 
-Fit the hero, navigation, and bottom metadata within the viewport using `100dvh` and responsive sizing. Allow accessible scrolling on exceptionally short screens. Keep the enlarged coil slightly left of the right edge and constrained by viewport height; preserve the smaller mobile treatment.
+Fit the desktop hero, navigation, and bottom metadata within the viewport using `100dvh` and responsive sizing. On mobile, do not force viewport height: hide the coil, let the hero grow with content, place bottom metadata after the content, and allow the enlarged headline to wrap naturally. Keep the enlarged desktop coil slightly left of the right edge and constrained by viewport height.
 
 Both “Explore my work” CTAs and “Building” currently open the native Student Management System preview dialog. About, Philosophy, Experience, and Skills remain inactive until their sections exist. Do not invent résumé, contact, or project destinations or present exploratory features as completed work.
 
 ### Motion
 
-- Use controlled, cinematic motion without bouncing. Reveal navigation, metadata, the masked headline, supporting copy, and CTAs in sequence.
+- Use controlled, cinematic motion without bouncing. Reveal navigation, metadata, the complete headline, supporting copy, and CTAs in sequence. The complete headline uses one 1.8-second subtle opacity fade beginning at 550ms, like the supporting copy; do not stagger it or restore a sharp vertical or masked-rise animation.
 - Preserve the gradual navigation-to-rounded-dock transition as the page grows. Use restrained blue section indicators.
-- The coil starts on the left and moves continuously through a restrained left-to-right-to-left pass of its actual 3D geometry, with approximately ±24° yaw and a slight lateral shift. Keep its guides stationary and its container free of vertical scroll parallax.
+- The desktop coil starts on the left and moves continuously through a restrained left-to-right-to-left pass of its actual 3D geometry, with approximately ±24° yaw and a slight lateral shift. Keep its guides stationary and its container free of vertical scroll parallax. Do not render it on mobile.
 - The resting pass lasts about 15 seconds. Pointer travel adds capped velocity in the travel direction, then returns to its resting speed with the approved **1000ms exponential damping time constant**. This is smoothing, not a fixed one-second pause before movement.
 - Reset pointer tracking on pointer leave or window blur, reset all motion when the tab is hidden, and clean up listeners and scheduled frames.
 - Preserve the visible but restrained blue pointer atmosphere, fading after movement stops. Disable pointer motion for touch/coarse pointers and honor reduced-motion preferences, including preference changes during a session.
