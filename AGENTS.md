@@ -67,9 +67,9 @@ Both “Explore my work” CTAs and “Building” currently open the native Stu
 
 - Use controlled, cinematic motion without bouncing. Reveal navigation, metadata, the masked headline, supporting copy, and CTAs in sequence.
 - Preserve the gradual navigation-to-rounded-dock transition as the page grows. Use restrained blue section indicators.
-- The coil rotates its actual 3D geometry toward horizontal pointer position across the hero, with approximately ±24° yaw and a slight lateral shift. Keep its guides stationary and its container free of vertical scroll parallax.
-- Use the approved **1000ms exponential damping time constant** for pointer following and returning to center. This is smoothing, not a fixed one-second pause before movement.
-- Return the coil to rest on pointer leave or window blur. Stop animation frames when settled, reset when the tab is hidden, and clean up listeners and scheduled frames.
+- The coil starts on the left and moves continuously through a restrained left-to-right-to-left pass of its actual 3D geometry, with approximately ±24° yaw and a slight lateral shift. Keep its guides stationary and its container free of vertical scroll parallax.
+- The resting pass lasts about 15 seconds. Pointer travel adds capped velocity in the travel direction, then returns to its resting speed with the approved **1000ms exponential damping time constant**. This is smoothing, not a fixed one-second pause before movement.
+- Reset pointer tracking on pointer leave or window blur, reset all motion when the tab is hidden, and clean up listeners and scheduled frames.
 - Preserve the visible but restrained blue pointer atmosphere, fading after movement stops. Disable pointer motion for touch/coarse pointers and honor reduced-motion preferences, including preference changes during a session.
 
 ## Validation
