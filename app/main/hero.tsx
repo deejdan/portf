@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { coilPaths, RESTING_COIL_PATHS } from "./coil-geometry";
 
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return (
@@ -20,31 +21,73 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   );
 }
 
-// Each line is a projected cross-section of one continuous torus.
-function ringPath(index: number) {
-  const u = (index / 88) * Math.PI * 2;
-  return (
-    Array.from({ length: 65 }, (_, step) => {
-      const v = (step / 64) * Math.PI * 2;
-      const radius = 165 + 61 * Math.cos(v);
-      const x = radius * Math.cos(u);
-      const y = radius * Math.sin(u);
-      const z = 61 * Math.sin(v);
-      const tiltedY = y * Math.cos(0.91) - z * Math.sin(0.91);
-      const depth = y * Math.sin(0.91) + z * Math.cos(0.91);
-      const perspective = 760 / (760 - depth);
-      const px =
-        (x * Math.cos(-0.63) - tiltedY * Math.sin(-0.63)) * perspective;
-      const py =
-        (x * Math.sin(-0.63) + tiltedY * Math.cos(-0.63)) * perspective;
-      return `${step === 0 ? "M" : "L"}${(300 + px).toFixed(2)},${(300 + py).toFixed(2)}`;
-    }).join(" ") + " Z"
-  );
-}
-
 function Sculpture() {
+  const sculpture = useRef<HTMLDivElement>(null);
+  const wireframe = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    const hero = sculpture.current?.closest(".hero");
+    const paths = wireframe.current?.querySelectorAll("path");
+    if (!hero || !paths) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let frame = 0;
+    let current = 0;
+    let target = 0;
+    let lastTime = 0;
+    const draw = (position: number) => {
+      coilPaths(position).forEach((path, index) => paths[index].setAttribute("d", path));
+    };
+    const animate = (time: number) => {
+      const elapsed = lastTime ? Math.min(time - lastTime, 64) : 16;
+      lastTime = time;
+      current += (target - current) * (1 - Math.exp(-elapsed / 1000));
+      const settled = Math.abs(target - current) < 0.0005;
+      if (settled) current = target;
+      draw(current);
+      frame = settled ? 0 : requestAnimationFrame(animate);
+    };
+    const steer = (position: number) => {
+      target = position;
+      if (!frame) {
+        lastTime = 0;
+        frame = requestAnimationFrame(animate);
+      }
+    };
+    const move = (event: Event) => {
+      const pointer = event as PointerEvent;
+      if (reduced.matches || !finePointer.matches || pointer.pointerType === "touch") return;
+      const bounds = hero.getBoundingClientRect();
+      steer(Math.max(-1, Math.min(1, ((pointer.clientX - bounds.left) / bounds.width) * 2 - 1)));
+    };
+    const reset = () => steer(0);
+    const resetImmediately = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      current = target = lastTime = 0;
+      draw(0);
+    };
+    const visibility = () => { if (document.hidden) resetImmediately(); };
+    hero.addEventListener("pointermove", move, { passive: true });
+    hero.addEventListener("pointerleave", reset);
+    hero.addEventListener("pointercancel", reset);
+    window.addEventListener("blur", reset);
+    document.addEventListener("visibilitychange", visibility);
+    reduced.addEventListener("change", resetImmediately);
+    finePointer.addEventListener("change", resetImmediately);
+    return () => {
+      cancelAnimationFrame(frame);
+      hero.removeEventListener("pointermove", move);
+      hero.removeEventListener("pointerleave", reset);
+      hero.removeEventListener("pointercancel", reset);
+      window.removeEventListener("blur", reset);
+      document.removeEventListener("visibilitychange", visibility);
+      reduced.removeEventListener("change", resetImmediately);
+      finePointer.removeEventListener("change", resetImmediately);
+    };
+  }, []);
   return (
-    <div className="sculpture" aria-hidden="true">
+    <div ref={sculpture} className="sculpture" aria-hidden="true">
       <div className="sculpture-halo" />
       <svg className="sculpture-svg" viewBox="0 0 600 600" fill="none">
         <defs>
@@ -71,22 +114,18 @@ function Sculpture() {
           <path d="M22 300h556M300 22v556M105 105l390 390" />
           <path d="M43 294v12m514-12v12M294 43h12m-12 514h12" />
         </g>
-        <g stroke="url(#blue-wire)" strokeWidth=".8">
-          {Array.from({ length: 88 }, (_, index) => (
+        <g ref={wireframe} stroke="url(#blue-wire)" strokeWidth=".8">
+          {RESTING_COIL_PATHS.map((path, index) => (
             <path
               key={index}
-              d={ringPath(index)}
-              opacity={0.4 + 0.5 * (index / 88)}
+              d={path}
+              opacity={0.4 + 0.5 * (index / RESTING_COIL_PATHS.length)}
             />
           ))}
         </g>
         <circle cx="300" cy="47" r="3" fill="#6d99ff" />
         <circle cx="553" cy="300" r="2" fill="#6d99ff" />
       </svg>
-      <div className="figure-label">
-        <span className="figure-cross">+</span> FORM FOLLOWS INTENT{" "}
-        <span>FIG. 001</span>
-      </div>
     </div>
   );
 }
@@ -180,25 +219,20 @@ export default function Hero() {
         </button>
       </header>
       <section className="hero" id="introduction" aria-labelledby="hero-title">
-        <div className="side-index" aria-hidden="true">
-          <span>01 / INTRODUCTION</span>
-          <i />
-          <span>PORTFOLIO — 2026</span>
-        </div>
         <div className="hero-content">
           <div className="eyebrow entrance">
-            <span className="blue-dot" /> DANIEL / FULLSTACK SOFTWARE ENGINEER
+            <span className="blue-dot" /> FULLSTACK SOFTWARE ENGINEER
           </div>
           <h1 id="hero-title">
+            <span className="headline-mask">
+              <span>I’m <em>Daniel.</em></span>
+            </span>
             <span className="headline-mask">
               <span>I build software</span>
             </span>
             <span className="headline-mask">
-              <span>for problems</span>
-            </span>
-            <span className="headline-mask">
               <span>
-                that <em>matter.</em>
+                that <em>matters.</em>
               </span>
             </span>
           </h1>
